@@ -1,9 +1,9 @@
 #ifndef CLASS_CError_Analyzer
 #define CLASS_CError_Analyzer
 
-#include "../trame/CTrame.h"
+#include "frame/CFrame.h"
 
-class CErrorAnalyzer
+class ErrorAnalyzer
 {
 private:
 	long int nb_bit_errors;
@@ -27,10 +27,10 @@ protected:
 	bool mode_simd;
     
 public:
-    CErrorAnalyzer(CTrame *t, bool _simd);
-    CErrorAnalyzer(CTrame *t, int max_fe, bool _simd);
-    CErrorAnalyzer(CTrame *t, int max_fe, bool auto_fe_mode, bool _simd);
-    virtual ~CErrorAnalyzer();
+    ErrorAnalyzer(CFrame *t, bool _simd);
+    ErrorAnalyzer(CFrame *t, int max_fe, bool _simd);
+    ErrorAnalyzer(CFrame *t, int max_fe, bool auto_fe_mode, bool _simd);
+    virtual ~ErrorAnalyzer();
     virtual void generate();
     virtual void store_enc_bits();
     virtual void generate(int nErrors);
@@ -46,7 +46,7 @@ public:
     double ber_value();
 
     void reset_internals();
-    void accumulate(CErrorAnalyzer *cErr);
+    void accumulate(ErrorAnalyzer *cErr);
 
     long int nb_processed_frames(int add);
     long int nb_fe(int add);

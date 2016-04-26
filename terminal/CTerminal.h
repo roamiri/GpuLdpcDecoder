@@ -1,8 +1,8 @@
 #ifndef CLASS_CTerminal
 #define CLASS_CTerminal
 
-#include "../timer/CTimer.h"
-#include "../ber_analyzer/CErrorAnalyzer.h"
+#include "utils/CTimer.h"
+#include "ber_analyzer/ErrorAnalyzer.h"
 
 
 using namespace std;
@@ -15,11 +15,11 @@ private:
 protected:
 	int fer_limit;
     double Eb_N0;
-    CErrorAnalyzer *counter;
+    ErrorAnalyzer *counter;
     CTimer         *timer;
 
 public:
-    CTerminal(CErrorAnalyzer *_counter, CTimer *_timer, double _eb_n0);
+    CTerminal(ErrorAnalyzer *_counter, CTimer *_timer, double _eb_n0);
 
     void temp_report();
     void final_report();

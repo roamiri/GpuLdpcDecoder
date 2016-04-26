@@ -25,53 +25,45 @@ set(CUDA_NVCC_FLAGS
 
 set(srcs
 	mini.cpp
-	awgn_channel/CChanel.cpp
-	ber_analyzer/CErrorAnalyzer.cpp
+	awgn_channel/Chanel.cpp
+	ber_analyzer/ErrorAnalyzer.cpp
 	terminal/CTerminal.cpp
-	trame/CTrame.cpp
-# 	tools/debug_fx.cpp
-	decoder_template/CGPUDecoder.cpp
+	frame/CFrame.cpp
+	decoder/CGPUDecoder.cpp
 	matrix/constantes_decoder.cpp
-	timer/CTimerCpu.cpp
+	utils/CTimerCpu.cpp
 )
 
 set(hdrs
-	awgn_channel/CChanel.h 
-	awgn_channel/CChanel_AWGN_SIMD.h
+	awgn_channel/Chanel.h 
+	awgn_channel/Chanel_AWGN_SIMD.h
 	
-	ber_analyzer/CErrorAnalyzer.h
+	ber_analyzer/ErrorAnalyzer.h
 	custom_api/custom_cuda.h
 	
-	decoder_ms/CGPU_Decoder_MS_SIMD.h
-	decoder_ms/cuda/CUDA_MS_SIMD.h  
+	decoder/CGPU_Decoder_MS_SIMD.h
+	decoder/cuda/CUDA_MS_SIMD.h  
+	decoder/CGPUDecoder.h
 	
-	decoder_template/CGPUDecoder.h
-	decoder_template/GPU_Scheduled_functions.h
-	
-# 	transpose/GPU_Transpose.h
 	transpose/GPU_Transpose_uint8.h
 	utils/simd_functions.h
 	
 	terminal/CTerminal.h
-# 	tools/debug_fx.h
-	trame/CTrame.h
-	timer/CTimer.h
-	timer/CTimerCpu.h
+	frame/CFrame.h
+	utils/CTimer.h
+	utils/CTimerCpu.h
 )
 
 set(kernels
-	awgn_channel/CChanel_AWGN_SIMD.cu
+	awgn_channel/Chanel_AWGN_SIMD.cu
 	custom_api/custom_cuda.cu
 	
-	decoder_ms/CGPU_Decoder_MS_SIMD.cu
-	decoder_ms/cuda/CUDA_MS_SIMD.cu
+	decoder/CGPU_Decoder_MS_SIMD.cu
+	decoder/cuda/CUDA_MS_SIMD.cu
 	
-	decoder_template/GPU_Scheduled_functions.cu
-	
-# 	transpose/GPU_Transpose.cu
 	transpose/GPU_Transpose_uint8.cu
 	
-	timer/CTimer.cu
+	utils/CTimer.cu
 )
 cuda_add_executable(${PROJECTNAME} ${srcs} ${hdrs} ${kernels})
 

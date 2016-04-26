@@ -1,6 +1,6 @@
-#include "CErrorAnalyzer.h"
+#include "ErrorAnalyzer.h"
 
-CErrorAnalyzer::CErrorAnalyzer(CTrame *t, bool _simd){
+ErrorAnalyzer::ErrorAnalyzer(CFrame *t, bool _simd){
     _data         = t->nb_data();
     _vars         = t->nb_vars();
     _frames       = t->nb_frames();
@@ -21,7 +21,7 @@ CErrorAnalyzer::CErrorAnalyzer(CTrame *t, bool _simd){
 	}
 }
 
-CErrorAnalyzer::CErrorAnalyzer(CTrame *t, int max_fe, bool _simd){
+ErrorAnalyzer::ErrorAnalyzer(CFrame *t, int max_fe, bool _simd){
     _data              = t->nb_data();
     _vars              = t->nb_vars();
     _frames            = t->nb_frames();
@@ -42,7 +42,7 @@ CErrorAnalyzer::CErrorAnalyzer(CTrame *t, int max_fe, bool _simd){
 	}
 }
 
-CErrorAnalyzer::CErrorAnalyzer(CTrame *t, int max_fe, bool auto_fe_mode, bool _simd){
+ErrorAnalyzer::ErrorAnalyzer(CFrame *t, int max_fe, bool auto_fe_mode, bool _simd){
     _data              = t->nb_data();
     _vars              = t->nb_vars();
     _frames            = t->nb_frames();
@@ -63,8 +63,8 @@ CErrorAnalyzer::CErrorAnalyzer(CTrame *t, int max_fe, bool auto_fe_mode, bool _s
 	}
 }
 
-CErrorAnalyzer::~CErrorAnalyzer(){
-//    printf("(DD) START CErrorAnalyzer::~CErrorAnalyzer() !\n");
+ErrorAnalyzer::~ErrorAnalyzer(){
+//    printf("(DD) START ErrorAnalyzer::~ErrorAnalyzer() !\n");
     delete ber_per_thread;
     delete fer_per_thread;
 //    for (int z = 0; z < _frames; z++){
@@ -73,24 +73,24 @@ CErrorAnalyzer::~CErrorAnalyzer(){
 //	}
 //	printf("\n");
 //	exit( 0 );
-//    printf("(DD) STOP  CErrorAnalyzer::~CErrorAnalyzer() !\n");
+//    printf("(DD) STOP  ErrorAnalyzer::~ErrorAnalyzer() !\n");
 }
 
-void CErrorAnalyzer::reset_internals()
+void ErrorAnalyzer::reset_internals()
 {
     nb_bit_errors      = 0;
     nb_frame_errors    = 0;
     nb_analyzed_frames = 0;
 }
 
-void CErrorAnalyzer::accumulate(CErrorAnalyzer *cErr)
+void ErrorAnalyzer::accumulate(ErrorAnalyzer *cErr)
 {
     nb_bit_errors      += cErr->nb_bit_errors;
     nb_frame_errors    += cErr->nb_frame_errors;
     nb_analyzed_frames += cErr->nb_analyzed_frames;
 }
 
-long int CErrorAnalyzer::fe_limit()
+long int ErrorAnalyzer::fe_limit()
 {
     if( _auto_fe_mode == false ){
         return _max_fe;
@@ -110,13 +110,13 @@ long int CErrorAnalyzer::fe_limit()
     }
 }
 
-bool CErrorAnalyzer::fe_limit_achieved()
+bool ErrorAnalyzer::fe_limit_achieved()
 {
     return (nb_fe() >= fe_limit());
 }
 
 #define NORMAL 1
-void CErrorAnalyzer::generate(){
+void ErrorAnalyzer::generate(){
 #if NORMAL == 0
 	for (int z = 0; z < _frames; z++){
         int offset = z * _data;
@@ -158,63 +158,63 @@ void CErrorAnalyzer::generate(){
 #endif
 }
 
-void CErrorAnalyzer::generate(int nErrors){
+void ErrorAnalyzer::generate(int nErrors){
     nb_bit_errors      += nErrors;
     nb_frame_errors    += (nErrors != 0);
     nb_analyzed_frames += 1;
 }
 
-void CErrorAnalyzer::store_enc_bits(){
+void ErrorAnalyzer::store_enc_bits(){
 //    for(int i=0; i<_vars; i++){
 //        buf_en_bits[i] = 0;// t_in_bits[i];
 //    }
 }
 
-long int CErrorAnalyzer::nb_processed_frames(){
+long int ErrorAnalyzer::nb_processed_frames(){
     return nb_analyzed_frames;
 }
 
-long int CErrorAnalyzer::nb_fe(){
+long int ErrorAnalyzer::nb_fe(){
     return nb_frame_errors;
 }
 
-long int CErrorAnalyzer::nb_be(){
+long int ErrorAnalyzer::nb_be(){
     return nb_bit_errors;
 }
 
-double CErrorAnalyzer::fer_value(){
+double ErrorAnalyzer::fer_value(){
     double tFER = (((double)nb_fe())/(nb_processed_frames()));
     return tFER;
 }
 
-double CErrorAnalyzer::ber_value(){
+double ErrorAnalyzer::ber_value(){
     double tBER = (((double)nb_be())/(nb_processed_frames())/(_vars));
     return tBER;
 }
 
-long int CErrorAnalyzer::nb_be(int data){
+long int ErrorAnalyzer::nb_be(int data){
     nb_bit_errors = data;
     return nb_bit_errors;
 }
 
-long int CErrorAnalyzer::nb_processed_frames(int data){
+long int ErrorAnalyzer::nb_processed_frames(int data){
     nb_analyzed_frames = data;
     return nb_analyzed_frames;
 }
 
-long int CErrorAnalyzer::nb_fe(int data){
+long int ErrorAnalyzer::nb_fe(int data){
     nb_frame_errors = data;
     return nb_frame_errors;
 }
 
-int CErrorAnalyzer::nb_data(){
+int ErrorAnalyzer::nb_data(){
     return _data;
 }
 
-int CErrorAnalyzer::nb_vars(){
+int ErrorAnalyzer::nb_vars(){
     return _vars;
 }
 
-int CErrorAnalyzer::nb_checks(){
+int ErrorAnalyzer::nb_checks(){
     return (_data - _vars);
 }

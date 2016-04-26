@@ -1,15 +1,15 @@
-#ifndef CLASS_CChanel
-#define CLASS_CChanel
+#ifndef CLASS_Chanel
+#define CLASS_Chanel
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include "../trame/CTrame.h"
+#include "frame/CFrame.h"
 
 #define small_pi  3.1415926536
 #define _2pi  (2.0 * small_pi)
 
-class CChanel
+class Chanel
 {
     
 protected:
@@ -23,8 +23,8 @@ protected:
     bool es_n0;
     size_t _frames;
     
-    float*  t_noise_data;   // taille (width)
-    int*    t_coded_bits;   // taille (width)
+    float*  t_noise_data;   // size (width)
+    int*    t_coded_bits;   // size (width)
     
     double performance;
     double SigB;
@@ -34,10 +34,10 @@ protected:
     double Eb_N0;
     
 public:
-    CChanel(CTrame *t, int _BITS_LLR, bool QPSK, bool Es_N0);
-    virtual ~CChanel();
-    virtual void configure(double _Eb_N0) = 0;  // VIRTUELLE PURE
-    virtual void generate() = 0;                // VIRTUELLE PURE    
+    Chanel(CFrame *t, int _BITS_LLR, bool QPSK, bool Es_N0);
+    virtual ~Chanel();
+    virtual void configure(double _Eb_N0) = 0;  
+    virtual void generate() = 0;                
 };
 
 #endif

@@ -18,19 +18,19 @@
  
  //#include "CFloodingGpuDecoder.h"
  
- #include "./decoder_ms/CGPU_Decoder_MS_SIMD.h"
+ #include "decoder/CGPU_Decoder_MS_SIMD.h"
  
  
  //#define pi  3.1415926536
  
- #include "./timer/CTimer.h"
- #include "timer/CTimerCpu.h"
- #include "./trame/CTrame.h"
- #include "./awgn_channel/CChanel_AWGN_SIMD.h"
- #include "./ber_analyzer/CErrorAnalyzer.h"
- #include "./terminal/CTerminal.h"
+ #include "utils/CTimer.h"
+ #include "utils/CTimerCpu.h"
+ #include "frame/CFrame.h"
+ #include "awgn_channel/Chanel_AWGN_SIMD.h"
+ #include "ber_analyzer/ErrorAnalyzer.h"
+ #include "terminal/CTerminal.h"
  
- #include "./matrix/constantes_gpu.h"
+ #include "matrix/constantes_gpu.h"
  
  //#define SINGLE_THREAD 1
  
@@ -43,7 +43,8 @@
  
  ////////////////////////////////////////////////////////////////////////////////////
  
- void show_info(){
+ void show_info()
+ {
 	 struct cudaDeviceProp devProp;
 	 cudaGetDeviceProperties(&devProp, 0);
 	 //  	printf("(II) Identifiant du GPU (CUDA)    : %s\n", devProp.name);
@@ -90,7 +91,7 @@
 	 int    NB_THREAD_ON_GPU   = 1024;
 	 int    FRAME_ERROR_LIMIT  =  200;
 	 
-	 char  defDecoder[] = "fMS";
+	 char  defDecoder[] = "MS";
 	 const char* type = defDecoder;
 	 
 	 //
@@ -204,28 +205,23 @@
 	 printf("(II) FAST STOP MODE       : %d\n", QUICK_STOP);
 	 
 	 CTimer simu_timer(true);
+	
+	 CFrame* simu_data;
+	 simu_data = new CFrame(_N, _K, NB_THREAD_ON_GPU);
 	 
-	 
-	 //
-	 // ALLOCATION DYNAMIQUE DES DONNESS NECESSAIRES A LA SIMULATION DU SYSTEME
-	 //
-	 CTrame* simu_data;
-	 simu_data = new CTrame(_N, _K, NB_THREAD_ON_GPU);
+	 Chanel_AWGN_SIMD* noise;
+	 noise = new Chanel_AWGN_SIMD(simu_data, 4, QPSK_CHANNEL, Es_N0);
 	 
 	 CGPUDecoder* decoder;
 	 decoder = new CGPU_Decoder_MS_SIMD( NB_THREAD_ON_GPU, _N, _K, _M );
-	 decoder->initialize();
-	 
-	 CChanel_AWGN_SIMD* noise;
-	 noise = new CChanel_AWGN_SIMD(simu_data, 4, QPSK_CHANNEL, Es_N0);
 	 
 	 Eb_N0 = MinSignalToNoise;
 	 long int temps = 0, fdecoding = 0;
 	 
-	 CErrorAnalyzer* errCounter;
+	 ErrorAnalyzer* errCounter;
 	 
 	 long etime = 0;
-	 CErrorAnalyzer errCounters(simu_data, FRAME_ERROR_LIMIT, false, false);
+	 ErrorAnalyzer errCounters(simu_data, FRAME_ERROR_LIMIT, false, false);
 	 if(STOP_TIMER_SECOND == -1)
 		 while (Eb_N0 <=MaxSignalToNoise)
 		 {
@@ -237,7 +233,7 @@
 			 CTimer temps_ecoule(true);
 			 CTimer term_refresh(true);
 			 
-			errCounter = new CErrorAnalyzer(simu_data, FRAME_ERROR_LIMIT, true, true);
+			errCounter = new ErrorAnalyzer(simu_data, FRAME_ERROR_LIMIT, true, true);
 			 
 			 //
 			 //
@@ -254,7 +250,7 @@
 
 			 //
 			CTimer essai(true);
-			decoder->decode_stream( simu_data->get_t_noise_data(), simu_data->get_t_decode_data(), NUMBER_ITERATIONS );
+			decoder->decode( simu_data->get_t_noise_data(), simu_data->get_t_decode_data(), NUMBER_ITERATIONS );
 			etime += essai.get_time_ms();
 			noise->generate();  // ON GENERE LE BRUIT DU CANAL
 			errCounter->generate();

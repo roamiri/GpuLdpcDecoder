@@ -8,7 +8,7 @@ void CTerminal::ShowTime(unsigned long secondes)
     printf("%2.2dh%2.2d'%2.2d", hh, mn, ss);
 }
 
-CTerminal::CTerminal(CErrorAnalyzer *_counter, CTimer *_timer, double _eb_n0){
+CTerminal::CTerminal(ErrorAnalyzer *_counter, CTimer *_timer, double _eb_n0){
     counter   = _counter;
     timer     = _timer;
     Eb_N0     = _eb_n0;
