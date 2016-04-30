@@ -77,7 +77,6 @@
 	 int p;
 	 srand( 0 );
 	 printf("(II) LDPC DECODER - Flooding scheduled decoder\n");
-	 printf("(II) MANIPULATION OF DATA (IEEE-754 - %ld bits)\n", (long int)8*sizeof(int));
 	 printf("(II) GENERATED : %s - %s\n", __DATE__, __TIME__);
 	 
 	 double Eb_N0;
@@ -102,12 +101,9 @@
 	 
 	 cudaSetDevice(0);
 	 cudaDeviceSynchronize();
-	 cudaThreadSynchronize();
 	 
-	 //
-	 // ON VA PARSER LES ARGUMENTS DE LIGNE DE COMMANDE
-	 //
-	 for (p=1; p<argc; p++) {
+	 for (p=1; p<argc; p++) 
+	 {
 		 if( strcmp(argv[p], "-min") == 0 ){
 			 MinSignalToNoise = atof( argv[p+1] );
 			 p += 1;
@@ -227,28 +223,18 @@
 		 {
 			 
 			 noise->configure(Eb_N0);
-			 //
-			 // ON CREE UN OBJET POUR LA MESURE DU TEMPS DE SIMULATION (REMISE A ZERO POUR CHAQUE Eb/N0)
-			 //
+			 
 			 CTimer temps_ecoule(true);
 			 CTimer term_refresh(true);
 			 
-			errCounter = new ErrorAnalyzer(simu_data, FRAME_ERROR_LIMIT, true, true);
+			 errCounter = new ErrorAnalyzer(simu_data, FRAME_ERROR_LIMIT, true, true);
 			 
-			 //
-			 //
-			 // ON CREE L'OBJET EN CHARGE DES INFORMATIONS DANS LE TERMINAL UTILISATEUR
-			 //
 			 CTerminal terminal(&errCounters, &temps_ecoule, Eb_N0);
+
+			 noise->generate();
 			 
-			 //
-			 
-			 // ON GENERE LA PREMIERE TRAME BRUITEE
-			 
-			noise->generate();
 			 errCounter->store_enc_bits();
 
-			 //
 			CTimer essai(true);
 			decoder->decode( simu_data->get_t_noise_data(), simu_data->get_t_decode_data(), NUMBER_ITERATIONS );
 			etime += essai.get_time_ms();
@@ -256,29 +242,15 @@
 			errCounter->generate();
 			fdecoding += 1;
 			 
-			 //
-			 // ON COMPTE LE NOMBRE D'ERREURS DANS LA TRAME DECODE
-			 //
 			 errCounters.reset_internals();
 			 errCounters.accumulate( errCounter);
-			 
-			 //
-			 // ON compare le Frame Error avec la limite imposee par l'utilisateur. Si on depasse
-			 // alors on affiche les resultats sur Eb/N0 courant.
-			 //
-			 //         if ( errCounters.fe_limit_achieved() == true )
-			 //         {
-			 // 			std::cerr <<  "got out of loop !!" << __LINE__ << std::endl;
-			 //             break;
-			 //         }
 			 
 			 if( term_refresh.get_time_sec() >= 1 )
 			 {
 				 term_refresh.reset();
 				 terminal.temp_report();
 			 }
-			 
-			 
+
 			 terminal.final_report();
 			 
 			 if( (simu_timer.get_time_sec() >= STOP_TIMER_SECOND) && (STOP_TIMER_SECOND != -1) )
@@ -320,28 +292,6 @@
 			 cout << endl << "Temps = " << temps/1000 << "ms : " << mbits*1000;
 			 cout << "kb/s : " << ((float)(temps/1000)/NB_THREAD_ON_GPU) << "ms/frame" << endl << endl;
 		 }
-		 
-		 if(0)
-		 {
-			 printf("FINAL REPORT.\n");
-			 // 			int tempDum = 0;
-			 // 			for(int i=0;i<4.i++)
-			 temps = etime;
-			 printf("(II) PERFORMANCE EVALUATION WAS PERFORMED ON %d RUNS, TOTAL TIME = %dms\n", fdecoding, temps/1000);
-			 temps /= fdecoding;
-			 printf("(II) + TIME / RUN = %dms\n", temps/1000);
-			 int   workL = 1 * NB_THREAD_ON_GPU;
-			 int   kbits =  (workL * _N * 1000 * NUM_ACTIVE_THREADS)/ (temps) ;
-			 printf("TIME = %ld\n", temps);
-			 printf("KBPS = %d\n", kbits);
-			 float mbits = ((float)kbits) / 1000.0;
-			 printf("(II) + DECODER LATENCY (ms)     = %d\n", temps/1000);
-			 printf("(II) + DECODER THROUGHPUT (Mbps)= %.1f\n", mbits);
-			 printf("(II) + (%.2fdB, %dThd : %dCw, %dits) THROUGHPUT = %.1f\n", Eb_N0, NB_THREAD_ON_GPU, workL, NUMBER_ITERATIONS, mbits);
-			 cout << endl << "Temps = " << temps << "ms : " << kbits;
-			 cout << "kb/s : " << ((float)temps/NB_THREAD_ON_GPU) << "ms/frame" << endl << endl;
-		 }
-		 
 		 
 		 ////////////////////////////////////////////////////////////////////////////////
 		 //

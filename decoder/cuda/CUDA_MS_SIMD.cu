@@ -1,20 +1,9 @@
-/*
- * Copyright 1993-2012 NVIDIA Corporation.  All rights reserved.
- *
- * Please refer to the NVIDIA end user license agreement (EULA) associated
- * with this source code for terms and conditions that govern your use of
- * this software. Any use, reproduction, disclosure, or distribution of
- * this software and related documentation outside the terms of the EULA
- * is strictly prohibited.
- *
- */
 
 #include "matrix/constantes_gpu.h"
 #include "utils/simd_functions.h"
 
 #include <stdio.h>
 
-#define EARLY_TERM 0
 
 union t_1x4
 {
@@ -22,14 +11,11 @@ union t_1x4
     char c[4];
 };
 
-__global__ void LDPC_Sched_Stage_1_MS_SIMD(unsigned int var_nodes[_N],
-		unsigned int var_mesgs[_M], unsigned int PosNoeudsVariable[_M],
-   		unsigned int loops
-		) {
+__global__ void LDPC_Sched_Stage_1_MS_SIMD(unsigned int var_nodes[_N], unsigned int var_mesgs[_M], unsigned int PosNoeudsVariable[_M], unsigned int loops) 
+{
 
-	const int i  = threadIdx.x + blockIdx.x * blockDim.x
-			                   + blockIdx.y * blockDim.x * gridDim.x;
-	const int ii = blockDim.x  * blockDim.y * gridDim.x; // A VERIFIER !!!!
+	const int i  = threadIdx.x + blockIdx.x * blockDim.x + blockIdx.y * blockDim.x * gridDim.x;
+	const int ii = blockDim.x  * blockDim.y * gridDim.x; // A VERIFIER
 
 	__shared__ unsigned int iTable[DEG_1];
 
@@ -141,9 +127,6 @@ __global__ void LDPC_Sched_Stage_1_MS_SIMD(unsigned int var_nodes[_N],
 		unsigned int *p_msg1r = var_mesgs + i;
 		unsigned int *p_msg1w = var_mesgs + i;
 		unsigned int *p_indice_nod1 = PosNoeudsVariable;
-#if EARLY_TERM == 1
-		register unsigned int  ov_sign = 0x00000000;
-#endif			
 		//
 		// ON UTILISE UNE PETITE ASTUCE AFIN D'ACCELERER LA SIMULATION DU DECODEUR
 		//
@@ -187,9 +170,6 @@ __global__ void LDPC_Sched_Stage_1_MS_SIMD(unsigned int var_nodes[_N],
 				p_msg1w += ii;
 				var_nodes[iTable[j] * ii + i] = vaddss4(tab_vContr[j], msg_sortant);
 			}
-#if EARLY_TERM == 1
-			ov_sign = ov_sign | sign_du_check;
-#endif			
 		}
 
 #if NB_DEGRES > 1
@@ -235,16 +215,9 @@ __global__ void LDPC_Sched_Stage_1_MS_SIMD(unsigned int var_nodes[_N],
 				p_msg1w += ii;
 				var_nodes[ iTable[j] * ii + i ] = vaddss4(tab_vContr[j], msg_sortant);
 			}
-
-#if EARLY_TERM == 1
-			ov_sign = ov_sign | sign_du_check;
-#endif			
 		}
 #endif
-#if EARLY_TERM == 1
-		if (ov_sign == (0x00000000))
-			break;
-#endif		
+
 	}
 	__syncthreads();
 }

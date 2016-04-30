@@ -1,1 +1,1 @@
-#define CODE 1200
+#define CODE 1024
