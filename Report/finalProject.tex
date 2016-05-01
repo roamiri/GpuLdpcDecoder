@@ -1,6 +1,10 @@
 \documentclass{article}
 \usepackage[noadjust]{cite}
 \usepackage[pdftex]{graphicx}
+\usepackage{mwe}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{subfig}
 \usepackage{mathtools}  
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -259,38 +263,30 @@ To demonstrate the efficiency of the proposed ARM decoder, its throughput was co
 
 GPU devices have different characteristics: amount of stream multiprocessors, CUDA cores, working frequencies, etc. A GPU based algorithm should have the scalability to use all the processing capability of a GPU device. In Table \ref{table:gpus}, the proposed algorithm has been executed on multiple GPU devices. GT540M and K620, are considered as mid-range and GTX680 and TeslaK20 are considered as high power GPU devices. The performance in Table \ref{table:gpus} shows that the proposed algorithm can achieve up to 230 Mbps performance across devices. In these set of experiments, an x86 CPU processor is the host.
 
-\begin{table}[H]
-\centering
-\caption{Throughput (\textit{Mbps}) of algorithm on different GPUs}\label{table:gpus}
-\begin{tabular}{@{}cc|c|cc@{}}
-\toprule
-\textbf{code}                        & \textbf{target}                    & \textbf{iter} & \textit{Mbps} (1-thread) & \textit{Mbps} (3-thread)  \\ \midrule
-\multirow{8}{*}{\textbf{(576,288)}}  & \multirow{2}{*}{\textbf{GT540M}}   & \textbf{10}   & \textbf{23}  & \textbf{33}   \\ \cmidrule(l){3-5} 
-                                     &                                    & \textbf{5}    & \textbf{44}  & \textbf{61}   \\ \cmidrule(l){2-5} 
-                                     & \multirow{2}{*}{\textbf{K620}}     & \textbf{10}   & \textbf{23}  & \textbf{30}   \\ \cmidrule(l){3-5} 
-                                     &                                    & \textbf{5}    & \textbf{45}  & \textbf{61}   \\ \cmidrule(l){2-5} 
-                                     & \multirow{2}{*}{\textbf{GTX680}}   & \textbf{10}   & \textbf{94}  & \textbf{127}  \\ \cmidrule(l){3-5} 
-                                     &                                    & \textbf{5}    & \textbf{163} & \textbf{217}  \\ \cmidrule(l){2-5} 
-                                     & \multirow{2}{*}{\textbf{TeslaK20}} & \textbf{10}   & \textbf{66}  & \textbf{90}   \\ \cmidrule(l){3-5} 
-                                     &                                    & \textbf{5}    & \textbf{123} & \textbf{165}  \\ \midrule
-\multirow{8}{*}{\textbf{(2304,1152)}}& \multirow{2}{*}{\textbf{GT540M}}   & \textbf{10}   & \textbf{25}  & \textbf{37}   \\ \cmidrule(l){3-5} 
-                                     &                                    & \textbf{5}    & \textbf{47}  & \textbf{63}   \\ \cmidrule(l){2-5} 
-                                     & \multirow{2}{*}{\textbf{K620}}     & \textbf{10}   & \textbf{23}  & \textbf{31.5} \\ \cmidrule(l){3-5}
-                                     &                                    & \textbf{5}    & \textbf{47}  & \textbf{63}    \\ \cmidrule(l){2-5}
-                                     & \multirow{2}{*}{\textbf{GTX680}}   & \textbf{10}   & \textbf{94}  & \textbf{132}  \\ \cmidrule(l){3-5}
-                                     &                                    & \textbf{5}    & \textbf{170} & \textbf{226}   \\ \cmidrule(l){2-5}
-                                     & \multirow{2}{*}{\textbf{TeslaK20}} & \textbf{10}   & \textbf{66}  & \textbf{94}   \\ \cmidrule(l){3-5}
-                                     &                                    & \textbf{5}    & \textbf{127} & \textbf{170}  \\ \midrule
-\multirow{8}{*}{\textbf{(4000,2000)}}& \multirow{2}{*}{\textbf{GT540M}}   & \textbf{10}   & \textbf{27}  & \textbf{34}   \\ \cmidrule(l){3-5} 
-                                     &                                    & \textbf{5}    & \textbf{27}  & \textbf{37}   \\ \cmidrule(l){2-5} 
-                                     & \multirow{2}{*}{\textbf{K620}}     & \textbf{10}   & \textbf{24}  & \textbf{32}   \\ \cmidrule(l){3-5}
-                                     &                                    & \textbf{5}    & \textbf{44}   & \textbf{60}   \\ \cmidrule(l){2-5}
-                                     & \multirow{2}{*}{\textbf{GTX680}}   & \textbf{10}   & \textbf{98}  & \textbf{131}  \\ \cmidrule(l){3-5}
-                                     &                                    & \textbf{5}    & \textbf{164}  & \textbf{230}  \\ \cmidrule(l){2-5}
-                                     & \multirow{2}{*}{\textbf{TeslaK20}} & \textbf{10}   & \textbf{73}  & \textbf{98}   \\ \cmidrule(l){3-5}
-                                     &                                    & \textbf{5}    & \textbf{139} & \textbf{196}  \\ \bottomrule
-\end{tabular}
-\end{table}
+\begin{figure}[H]
+\begin{subfigure}{0.8\textwidth}
+  \centering
+  \includegraphics[width=.8\linewidth]{c_576_10.jpg}
+%  \caption{}
+  \label{fig:sfig10_1}
+\end{subfigure}%
+\begin{subfigure}{0.8\textwidth}
+  \centering
+  \includegraphics[width=.8\linewidth]{c_2304_10.jpg}
+ % \caption{1b}
+  \label{fig:sfig10_2}
+\end{subfigure}
+\begin{subfigure}{0.8\textwidth}
+  \centering
+  \includegraphics[width=.8\linewidth]{c_4k_10.jpg}
+  %\caption{1b}
+  \label{fig:sfig10_3}
+\end{subfigure}
+\caption{Throughput Comparison on Different Devices}
+\label{fig:fig}
+\end{figure}
+
+
 
 \section{Conclusion}
 An stream-based approach for GPU-based LDPC decoding on embedded devices was introduced in this paper. This algorithm is based on running multiple concurrent kernels on GPU devices to utilize their processing capacity and freeing up resources on the ARM processor of mobile devices. Our results show that, this approach helps to achieve desirable throughputs on embedded mobile devices. Experimental results demonstrate that proposed algorithm is scalable and can achieve high throughputs on multiple GPU devices. Moreover, the proposed algorithm structure provides a trade off for the operating system to choose between performance and resource management by selecting various values for the number of streams that are used for decoding.
