@@ -83,7 +83,7 @@
 	 double MinSignalToNoise  = 0.50;
 	 double MaxSignalToNoise  = 1;
 	 double PasSignalToNoise  = 0.10;
-	 int    NUMBER_ITERATIONS  = 20;
+	 int    NUMBER_ITERATIONS  = 10;
 	 int    STOP_TIMER_SECOND  = -1;
 	 bool   QPSK_CHANNEL       = false;
 	 bool   Es_N0              = false; // FALSE => MODE Eb_N0
@@ -238,7 +238,7 @@
 			CTimer essai(true);
 			decoder->decode( simu_data->get_t_noise_data(), simu_data->get_t_decode_data(), NUMBER_ITERATIONS );
 			etime += essai.get_time_ms();
-			noise->generate();  // ON GENERE LE BRUIT DU CANAL
+			noise->generate();  
 			errCounter->generate();
 			fdecoding += 1;
 			 
