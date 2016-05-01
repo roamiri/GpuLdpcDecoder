@@ -8,7 +8,7 @@ error=[1.582e-1 1.550e-1 1.509e-1 1.462e-1 1.416e-1 1.328e-1 1.248e-1 1.134e-1 .
 berfit(snr,error);
 ylabel('BER','FontSize',12,'FontWeight','bold','Color','k');
 xlabel('Eb/N0(dB)','FontSize',12,'FontWeight','bold','Color','k');
-% legend('1-Thread', '3-Threads','Location','northwest');
+legend('Experimental', 'Analytical','Location','northwest');
 title('Bit Error Rate for AWGN Channel','fontsize', 12, 'FontWeight','bold');
 grid on
 set(gca, 'fontsize', 12, 'FontWeight','bold');
