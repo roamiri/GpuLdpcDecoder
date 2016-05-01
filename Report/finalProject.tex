@@ -1,6 +1,8 @@
-\documentclass{article}
+\documentclass[10pt,a4paper]{article}
+\usepackage[top=10pt,bottom=10pt,left=48pt,right=46pt]{geometry}
 \usepackage[noadjust]{cite}
 \usepackage[pdftex]{graphicx}
+\usepackage{a4wide}
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{float}
@@ -9,6 +11,8 @@
 \usepackage{amssymb}
 \usepackage{tabulary}
 \usepackage{booktabs}
+\usepackage{rotating}
+\usepackage{tikz}
 \DeclarePairedDelimiter\abs{\lvert}{\rvert}%
 \DeclarePairedDelimiter\norm{\lVert}{\rVert}%
 
@@ -35,7 +39,7 @@
 
 \begin{abstract}
 
-Low density parity check (LDPC) codes have been extensively applied in mobile communication systems due to their excellent error correcting capabilities. However, their wide adoption has been hindered by the high complexity of the LDPC decoder. Although to date, dedicated hardware has been used to implement low latency LDPC decoders, recent advancements in the architecture of mobile processors has made it possible to develop software solutions. Here, we propose a multi-stream LDPC decoder that uses both ARM and GPU processors of a mobile device to achieve efficient real-time decoding. The proposed solution is implemented on an NVIDIA development board, where our results indicate that we can reduce the load on either the GPU or the ARM processor through the proposed structure.
+Low density parity check (LDPC) codes have been extensively applied in mobile communication systems due to their excellent error correcting capabilities. However, their wide adoption has been hindered by the high complexity of the LDPC decoder. Although to date, dedicated hardware has been used to implement low latency LDPC decoders, recent advancements in the architecture of mobile processors has made it possible to develop software solutions. Here, we propose a multi-stream LDPC decoder that uses GPU processor of a mobile device to achieve efficient real-time decoding. The proposed solution is implemented on an NVIDIA development board, where our results indicate that we can reduce the load on the ARM processor through the proposed structure.
 
 \end{abstract}
 
@@ -71,7 +75,7 @@ LDPC codes are a class of linear block codes with a very sparse parity check mat
 
 %representation
 Here, we present a very brief background on LDPC codes\footnote{The reader is refered to \cite{art_castello} for more information.}. There are two ways to represent LDPC codes. Like all linear block codes they can be described by their H-matrix, while they can also be represented by a Tanner graph which is a bipartite graph. An LDPC graph consists of a set of variable nodes, a set of check nodes, and a set of edges E. Each edge connects a variable node to a check node. For example, when the $(i,j)$ element of an H-matrix is '1', the $ith$ check node is connected to the $jth$ variable node of the equivalent Tanner graph. Fig.\ref{fig::tanner} illustrates the equivalent Tanner graph for a 10 variable nodes and 5 check nodes, $(10,5)$, LDPC code with H-matrix in \eqref{H-matrix} \cite{art_castello}.
-
+\noindent
 \begin{equation}\label{H-matrix}
 H=
   \begin{bmatrix}
@@ -89,7 +93,6 @@ H=
 \caption[width=.3\textwidth]{An example of Tanner graph}\label{fig::tanner}
 \end{centering}
 \end{figure}
-
 %Decoding
 The general decoding algorithm of LDPC codes is based on the standard two-phase message passing (TPMP) principle described in \cite{art_massively}. This algorithm works in two phases. In the first phase, all the variable nodes send messages to their neighboring parity check nodes, and in the second phase the parity check nodes send messages to their neighboring variable nodes. Due to transcendental operations and relying of message passing algorithm to the estimation of noise standard deviation, in practice Min-Sum (MS) variants are prefered by designers \cite{art_neon}. This algorithm is provided in Algorithm 1.
 \noindent
@@ -133,7 +136,7 @@ Due to poor parallel mapping of Min-Sum algorithm, more efficient schedules, suc
 \item[$\bullet$] (2) Once, a check node is calculated, the corresponding variable nodes are updated immediately after receiving messages.
 \item[$\bullet$] (3) This process is repeated to the maximum number of iterations.
 \end{enumerate}
-
+\noindent
 \begin{algorithm}[H]
 \renewcommand\thealgorithm{}
 \caption{\textbf{2} Horizontal Layered Min-Sum algorithm}\label{algorithm2}
@@ -189,11 +192,11 @@ To achieve high throughput performance, a software based LDPC decoder has to exp
 \end{itemize}
 Hence, here, we use the SIMD programming model to decode F frames in parallel. In subsection \ref{subsec_proposed} the parallel decoding of F frames is referred to kernel 2 for sake of simplicity.
 %In the next subsections, first the target architecture's features are presented. Then the structure of the proposed algorithm is detailed.
-
-\subsection{Target Architecture} \label{target_architecture}
-In this study, we focus on mobile embedded devices equipped with ARM and GPU processors. One example is Jetson K1 SoCs which consists of a 4-core Cortex-A15 and an NVIDIA GK20a GPU processor.
-
-An ARM Cortex-A15 processor is composed of multiple integer and floating point pipeline stages and is capable of running multiple concurrent threads. As in terms of GPU features, concurrent kernel execution capability of this device is most used in the proposed mapping. To achieve high throughput performance on such a low-power embedded processors, SIMD and SIMT programming models are exploited in the proposed LDPC decoder. Although, the proposed structure is applicable to other heterogeneous structures too, and is not limited to embedded devices.
+%
+%\subsection{Target Architecture} \label{target_architecture}
+%In this study, we focus on mobile embedded devices equipped with ARM and GPU processors. One example is Jetson K1 SoCs which consists of a 4-core Cortex-A15 and an NVIDIA GK20a GPU processor.
+%
+%An ARM Cortex-A15 processor is composed of multiple integer and floating point pipeline stages and is capable of running multiple concurrent threads. As in terms of GPU features, concurrent kernel execution capability of this device is most used in the proposed mapping. To achieve high throughput performance on such a low-power embedded processors, SIMD and SIMT programming models are exploited in the proposed LDPC decoder. Although, the proposed structure is applicable to other heterogeneous structures too, and is not limited to embedded devices.
 
 \subsection{Data Interleaving/Deinterleaving}
 Recal that the implementation of the parallel frame processing is subject to massive irregular memory access due to the structure of H-matrix. As a matter of fact, to process the same $VN_i$ element of the F frames at the same time, non-contiguous memory access would affect performance. To solve this issue, a data interleaving process has to be performed before and after the decoding stage to ensure that each set of F frames are reordered to achieve an aligned memory data structure. This reordering is shown in Fig.\ref{fig_intreleave} \cite{art_ldpc_cpu1}. In the proposed structure, interleaving and deinterleaving of frames are called {kernel 1} and {kernel 3}.
@@ -209,7 +212,7 @@ Recal that the implementation of the parallel frame processing is subject to mas
 \subsection{Multi Stream Parallelism}\label{subsec_proposed}
 
 The SIMT programming model is used to decode W sets of F frames concurrently, with W denoting the number of concurrent streams on the GPU device. This multi-core programming is specified by the CUDA API. Each GPU stream is controlled by a \textit{pthread} called \textit{worker} on the host machine (which is an ARM in this case). Each \textit{worker} is responsible for its own sets of frames. By using stream based processing, the system can decode W$\times$F frames at the same time. The whole LDPC decoder system model is shown in Fig.\ref{fig_total}.
-
+\noindent
 \begin{figure}[H]
 \begin{centering}
 \scalebox{0.35}{\includegraphics{total_new.jpg}}
@@ -259,6 +262,16 @@ To demonstrate the efficiency of the proposed ARM decoder, its throughput was co
 }
 \end{table}
 
+\subsection{Validating Results}
+To show the correctness of the algorithm, the bit error rate (BER) is calculated for different signal to noise ratios (SNRs). In the figure below, BER is plotted versus different SNRs. Thr solid line shows the actual BER of a binary phase modulation (BPSK) in an AWGN channel which is very close to the algorithm output (cross points).
+
+\begin{figure}[H]
+\begin{centering}
+\includegraphics[scale=0.15]{BER.jpg}
+\caption[width=.5\textwidth]{Bit Error Rate of BPSK Modulation in AWGN Channel}\label{fig::ber}
+\end{centering}
+\end{figure}
+
 \subsection{Performance Comparison on Different GPU Devices}
 
 GPU devices have different characteristics: amount of stream multiprocessors, CUDA cores, working frequencies, etc. A GPU based algorithm should have the scalability to use all the processing capability of a GPU device. The proposed algorithm has been executed on multiple GPU devices. GT540M and K620, are considered as mid-range and GTX680 and TeslaK20 are considered as high power GPU devices. The algorithm is executed for three code lengths as $(576,288)$, $(2304,1152)$ and $(4000,2000)$. The performance is shown for 10 and 5 iterations in two sets of figures in Fig.\ref{fig:10iter} and Fig.\ref{fig:5iter}. These figures show that the proposed algorithm can achieve up to 230 Mbps performance across devices. In these set of experiments, an x86 CPU processor is the host.
@@ -266,7 +279,7 @@ GPU devices have different characteristics: amount of stream multiprocessors, CU
 \begin{figure}[H]
   \begin{subfigure}[b]{0.6\textwidth}
     \includegraphics[width=\textwidth]{c_576_10.jpg}
-    \caption{code=(576,1152)}
+    \caption{code=(576,288)}
     \label{fig:throu_10_a}
   \end{subfigure}
   %
@@ -287,7 +300,7 @@ GPU devices have different characteristics: amount of stream multiprocessors, CU
 \begin{figure}[H]
   \begin{subfigure}[b]{0.6\textwidth}
     \includegraphics[width=\textwidth]{c_576_5.jpg}
-    \caption{code=(576,1152)}
+    \caption{code=(576,288)}
     \label{fig:throu_5_a}
   \end{subfigure}
   %
@@ -305,18 +318,8 @@ GPU devices have different characteristics: amount of stream multiprocessors, CU
   \caption{5 Iteration experiment}\label{fig:5iter}
 \end{figure}
 
-\subsection{Validating Results}
-To show the correctness of the algorithm, the bit error rate (BER) is calculated for different signal to noise ratios (SNRs). In the figure below, BER is plotted versus different SNRs.
-
-\begin{figure}[H]
-\begin{centering}
-\includegraphics[scale=0.1]{BER.jpg}
-\caption[width=.5\textwidth]{Bit Error Rate of BPSK Modulation in AWGN Channel}\label{fig::ber}
-\end{centering}
-\end{figure}
-
 \section{Conclusion}
-An stream-based approach for GPU-based LDPC decoding on embedded devices was introduced in this paper. This algorithm is based on running multiple concurrent kernels on GPU devices to utilize their processing capacity and freeing up resources on the ARM processor of mobile devices. Our results show that, this approach helps to achieve desirable throughputs on embedded mobile devices. Experimental results demonstrate that proposed algorithm is scalable and can achieve high throughputs on multiple GPU devices. Moreover, the proposed algorithm structure provides a trade off for the operating system to choose between performance and resource management by selecting various values for the number of streams that are used for decoding.
+An stream-based approach for GPU-based LDPC decoding on embedded devices was introduced in this report. This algorithm is based on running multiple concurrent kernels on GPU devices to utilize their processing capacity and freeing up resources on the ARM processor of mobile devices. Our results show that, this approach helps to achieve higher throughputs on embedded mobile devices. Experimental results demonstrate that the proposed algorithm is scalable and can achieve high throughputs on multiple GPU devices. Moreover, the proposed algorithm structure provides a trade off for the operating system to choose between performance and resource management by selecting various values for the number of streams that are used for decoding.
 
 \newpage
 
