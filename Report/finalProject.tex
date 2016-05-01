@@ -1,6 +1,9 @@
 \documentclass{article}
 \usepackage[noadjust]{cite}
 \usepackage[pdftex]{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
 \usepackage{mathtools}  
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -89,8 +92,8 @@ H=
 
 %Decoding
 The general decoding algorithm of LDPC codes is based on the standard two-phase message passing (TPMP) principle described in \cite{art_massively}. This algorithm works in two phases. In the first phase, all the variable nodes send messages to their neighboring parity check nodes, and in the second phase the parity check nodes send messages to their neighboring variable nodes. Due to transcendental operations and relying of message passing algorithm to the estimation of noise standard deviation, in practice Min-Sum (MS) variants are prefered by designers \cite{art_neon}. This algorithm is provided in Algorithm 1.
-
-\begin{algorithm}
+\noindent
+\begin{algorithm}[H]
 \renewcommand\thealgorithm{}
 \caption{\textbf{1} Min-Sum algorithm}\label{algorithm1}
 \begin{algorithmic}[1]
@@ -131,7 +134,7 @@ Due to poor parallel mapping of Min-Sum algorithm, more efficient schedules, suc
 \item[$\bullet$] (3) This process is repeated to the maximum number of iterations.
 \end{enumerate}
 
-\begin{algorithm}
+\begin{algorithm}[H]
 \renewcommand\thealgorithm{}
 \caption{\textbf{2} Horizontal Layered Min-Sum algorithm}\label{algorithm2}
 \begin{algorithmic}[1]
@@ -195,7 +198,7 @@ An ARM Cortex-A15 processor is composed of multiple integer and floating point p
 \subsection{Data Interleaving/Deinterleaving}
 Recal that the implementation of the parallel frame processing is subject to massive irregular memory access due to the structure of H-matrix. As a matter of fact, to process the same $VN_i$ element of the F frames at the same time, non-contiguous memory access would affect performance. To solve this issue, a data interleaving process has to be performed before and after the decoding stage to ensure that each set of F frames are reordered to achieve an aligned memory data structure. This reordering is shown in Fig.\ref{fig_intreleave} \cite{art_ldpc_cpu1}. In the proposed structure, interleaving and deinterleaving of frames are called {kernel 1} and {kernel 3}.
 
-\begin{figure}[h]
+\begin{figure}[H]
 \begin{centering}
 \scalebox{0.34}{\includegraphics{inter1.jpg}}
 \caption[width=.3\textwidth]{Data interleaving/deinterleaving process\cite{art_ldpc_cpu1}}
@@ -207,7 +210,7 @@ Recal that the implementation of the parallel frame processing is subject to mas
 
 The SIMT programming model is used to decode W sets of F frames concurrently, with W denoting the number of concurrent streams on the GPU device. This multi-core programming is specified by the CUDA API. Each GPU stream is controlled by a \textit{pthread} called \textit{worker} on the host machine (which is an ARM in this case). Each \textit{worker} is responsible for its own sets of frames. By using stream based processing, the system can decode W$\times$F frames at the same time. The whole LDPC decoder system model is shown in Fig.\ref{fig_total}.
 
-\begin{figure}[h]
+\begin{figure}[H]
 \begin{centering}
 \scalebox{0.35}{\includegraphics{total_new.jpg}}
 \caption[width=.3\textwidth]{LDCP Decoder Data Flow}
@@ -219,9 +222,9 @@ The SIMT programming model is used to decode W sets of F frames concurrently, wi
 
 The experiments were carried out by decoding LDPC codes using NVIDIA Tegra K1 SoCs and various other structures to show scalability. The programs were compiled via GCC-4.8 and CUDA 6.5. The TK1 is composed of 4 cortex-A15 ARM processors and one NVIDIA Kepler "GK20a" GPU with 192 SM3.2 CUDA cores. The host platform uses a GNU/Linux kernel 3.10.40.
 
-\begin{figure}[h]
+\begin{figure}[H]
 \begin{centering}
-\scalebox{0.15}{\includegraphics{Jetson_TK1.jpg}}
+\scalebox{0.1}{\includegraphics{Jetson_TK1.jpg}}
 \caption[width=.3\textwidth]{Tegra-TK1 Development Board}
 \label{tegra}
 \end{centering}
@@ -232,7 +235,7 @@ First set of experiments was performed to achieve air throughput using different
 
 Performance of one stream (or one thread) achieves 25 Mbps, while with 3 streams it can be as high as 35 Mbps. For a (4000,2000) LDPC code and one thread, data transfer takes about 2$\times$2.4 ms, interleaving steps need about 2$\times$5 ms and decoding takes about 150 ms. For the same code with 3 threads, data transfer takes about 2$\times$2.4 ms, interleaving steps need about 2$\times$5 ms and decoding takes about 150 ms. So by introducing more streams to GPU device, its performance does not degrade. In comparison the latency, i.e. the time for data transfer between the host and GPU device in \cite{art_gpu_0} is about 20 ms, which has been reduced here to 4.8 ms because of the architecture of embedded mobile device. On the other hand, with introducing 3 streams to GPU, its processing capacity is used more effectively which results to about 30\% throughput improvement in most of our experiments.
 
-\begin{figure}[h]
+\begin{figure}[H]
 \begin{centering}
 \includegraphics[scale=0.43]{air.jpg}
 \caption[width=.5\textwidth]{Measured throughputs for 10 layered decoding iterations (1-7 LDPC codes: $576 \times 288, 1024 \times 512, 1200 \times 600, 1944 \times 722, 4000 \times 2000, 8000 \times 4000, 9972 \times 4086$)}\label{fig::air}
@@ -241,6 +244,7 @@ Performance of one stream (or one thread) achieves 25 Mbps, while with 3 streams
 
 \subsection{Performance Comparison with Related Works}
 To demonstrate the efficiency of the proposed ARM decoder, its throughput was compared to the ARM related work in \cite{art_neon}. In \cite{art_neon}, ARM SIMD units are used to perform vector data processing in parallel frame decoding. In the experiment, the throughput of the proposed decoder is compared to that of \cite{art_neon} while using 1 thread for the work in \cite{art_neon} and 3 threads in the proposed algorithm. This selection is motivated by the fact that the 1 thread from \cite{art_neon} uses a 100\% of a core while the 3 threads for the proposed algorithm only uses 8\% of each core resulting in an overall utilization of 24\%. 10-iteration decoding performed on Tegra-K1 board gives us the results as shown in Table \ref{table_compare_arm}. The work in \cite{art_neon} can achieve much higher throughputs by using more threads on the ARM processor, but by introducing each thread, the whole capacity of one more ARM core is used for decoding. In Table \ref{table_compare_arm}, it is shown that the proposed algorithm can achieve the similar throughput to that of \cite{art_neon} when using 24\% of ARM processing power and using its GPU device. Although, by using more powerful GPU device, the algorithm can achieve much higher throughputs which has been shown in next subsection. This shows that the proposed algorithm is scalable across platforms.
+\noindent
 \begin{table}[H]
 \centering
 \caption{Throughput (Mbps) Comparison With Related Work} \label{table_compare_arm}
@@ -257,40 +261,59 @@ To demonstrate the efficiency of the proposed ARM decoder, its throughput was co
 
 \subsection{Performance Comparison on Different GPU Devices}
 
-GPU devices have different characteristics: amount of stream multiprocessors, CUDA cores, working frequencies, etc. A GPU based algorithm should have the scalability to use all the processing capability of a GPU device. In Table \ref{table:gpus}, the proposed algorithm has been executed on multiple GPU devices. GT540M and K620, are considered as mid-range and GTX680 and TeslaK20 are considered as high power GPU devices. The performance in Table \ref{table:gpus} shows that the proposed algorithm can achieve up to 230 Mbps performance across devices. In these set of experiments, an x86 CPU processor is the host.
+GPU devices have different characteristics: amount of stream multiprocessors, CUDA cores, working frequencies, etc. A GPU based algorithm should have the scalability to use all the processing capability of a GPU device. The proposed algorithm has been executed on multiple GPU devices. GT540M and K620, are considered as mid-range and GTX680 and TeslaK20 are considered as high power GPU devices. The algorithm is executed for three code lengths as $(576,288)$, $(2304,1152)$ and $(4000,2000)$. The performance is shown for 10 and 5 iterations in two sets of figures in Fig.\ref{fig:10iter} and Fig.\ref{fig:5iter}. These figures show that the proposed algorithm can achieve up to 230 Mbps performance across devices. In these set of experiments, an x86 CPU processor is the host.
+\noindent
+\begin{figure}[H]
+  \begin{subfigure}[b]{0.6\textwidth}
+    \includegraphics[width=\textwidth]{c_576_10.jpg}
+    \caption{code=(576,1152)}
+    \label{fig:throu_10_a}
+  \end{subfigure}
+  %
+  \begin{subfigure}[b]{0.6\textwidth}
+    \includegraphics[width=\textwidth]{c_2304_10.jpg}
+    \caption{code=(2304,1152)}
+    \label{fig:throu_10_b}
+  \end{subfigure}
+  \\
+    \begin{subfigure}[b]{0.7\textwidth}
+    \includegraphics[width=\textwidth]{c_4k_10.jpg}
+    \caption{code=(4000,2000)}
+    \label{fig:throu_10_c}
+  \end{subfigure}
+  \caption{10 Iteration experiment}\label{fig:10iter}
+\end{figure}
 
-\begin{table}[H]
-\centering
-\caption{Throughput (\textit{Mbps}) of algorithm on different GPUs}\label{table:gpus}
-\begin{tabular}{@{}cc|c|cc@{}}
-\toprule
-\textbf{code}                        & \textbf{target}                    & \textbf{iter} & \textit{Mbps} (1-thread) & \textit{Mbps} (3-thread)  \\ \midrule
-\multirow{8}{*}{\textbf{(576,288)}}  & \multirow{2}{*}{\textbf{GT540M}}   & \textbf{10}   & \textbf{23}  & \textbf{33}   \\ \cmidrule(l){3-5} 
-                                     &                                    & \textbf{5}    & \textbf{44}  & \textbf{61}   \\ \cmidrule(l){2-5} 
-                                     & \multirow{2}{*}{\textbf{K620}}     & \textbf{10}   & \textbf{23}  & \textbf{30}   \\ \cmidrule(l){3-5} 
-                                     &                                    & \textbf{5}    & \textbf{45}  & \textbf{61}   \\ \cmidrule(l){2-5} 
-                                     & \multirow{2}{*}{\textbf{GTX680}}   & \textbf{10}   & \textbf{94}  & \textbf{127}  \\ \cmidrule(l){3-5} 
-                                     &                                    & \textbf{5}    & \textbf{163} & \textbf{217}  \\ \cmidrule(l){2-5} 
-                                     & \multirow{2}{*}{\textbf{TeslaK20}} & \textbf{10}   & \textbf{66}  & \textbf{90}   \\ \cmidrule(l){3-5} 
-                                     &                                    & \textbf{5}    & \textbf{123} & \textbf{165}  \\ \midrule
-\multirow{8}{*}{\textbf{(2304,1152)}}& \multirow{2}{*}{\textbf{GT540M}}   & \textbf{10}   & \textbf{25}  & \textbf{37}   \\ \cmidrule(l){3-5} 
-                                     &                                    & \textbf{5}    & \textbf{47}  & \textbf{63}   \\ \cmidrule(l){2-5} 
-                                     & \multirow{2}{*}{\textbf{K620}}     & \textbf{10}   & \textbf{23}  & \textbf{31.5} \\ \cmidrule(l){3-5}
-                                     &                                    & \textbf{5}    & \textbf{47}  & \textbf{63}    \\ \cmidrule(l){2-5}
-                                     & \multirow{2}{*}{\textbf{GTX680}}   & \textbf{10}   & \textbf{94}  & \textbf{132}  \\ \cmidrule(l){3-5}
-                                     &                                    & \textbf{5}    & \textbf{170} & \textbf{226}   \\ \cmidrule(l){2-5}
-                                     & \multirow{2}{*}{\textbf{TeslaK20}} & \textbf{10}   & \textbf{66}  & \textbf{94}   \\ \cmidrule(l){3-5}
-                                     &                                    & \textbf{5}    & \textbf{127} & \textbf{170}  \\ \midrule
-\multirow{8}{*}{\textbf{(4000,2000)}}& \multirow{2}{*}{\textbf{GT540M}}   & \textbf{10}   & \textbf{27}  & \textbf{34}   \\ \cmidrule(l){3-5} 
-                                     &                                    & \textbf{5}    & \textbf{27}  & \textbf{37}   \\ \cmidrule(l){2-5} 
-                                     & \multirow{2}{*}{\textbf{K620}}     & \textbf{10}   & \textbf{24}  & \textbf{32}   \\ \cmidrule(l){3-5}
-                                     &                                    & \textbf{5}    & \textbf{44}   & \textbf{60}   \\ \cmidrule(l){2-5}
-                                     & \multirow{2}{*}{\textbf{GTX680}}   & \textbf{10}   & \textbf{98}  & \textbf{131}  \\ \cmidrule(l){3-5}
-                                     &                                    & \textbf{5}    & \textbf{164}  & \textbf{230}  \\ \cmidrule(l){2-5}
-                                     & \multirow{2}{*}{\textbf{TeslaK20}} & \textbf{10}   & \textbf{73}  & \textbf{98}   \\ \cmidrule(l){3-5}
-                                     &                                    & \textbf{5}    & \textbf{139} & \textbf{196}  \\ \bottomrule
-\end{tabular}
-\end{table}
+\begin{figure}[H]
+  \begin{subfigure}[b]{0.6\textwidth}
+    \includegraphics[width=\textwidth]{c_576_5.jpg}
+    \caption{code=(576,1152)}
+    \label{fig:throu_5_a}
+  \end{subfigure}
+  %
+  \begin{subfigure}[b]{0.6\textwidth}
+    \includegraphics[width=\textwidth]{c_2304_5.jpg}
+    \caption{code=(2304,1152)}
+    \label{fig:throu_5_b}
+  \end{subfigure}
+  \\
+    \begin{subfigure}[b]{0.7\textwidth}
+    \includegraphics[width=\textwidth]{c_4k_5.jpg}
+    \caption{code=(4000,2000)}
+    \label{fig:throu_5_c}
+  \end{subfigure}
+  \caption{5 Iteration experiment}\label{fig:5iter}
+\end{figure}
+
+\subsection{Validating Results}
+To show the correctness of the algorithm, the bit error rate (BER) is calculated for different signal to noise ratios (SNRs). In the figure below, BER is plotted versus different SNRs.
+
+\begin{figure}[H]
+\begin{centering}
+\includegraphics[scale=0.1]{BER.jpg}
+\caption[width=.5\textwidth]{Bit Error Rate of BPSK Modulation in AWGN Channel}\label{fig::ber}
+\end{centering}
+\end{figure}
 
 \section{Conclusion}
 An stream-based approach for GPU-based LDPC decoding on embedded devices was introduced in this paper. This algorithm is based on running multiple concurrent kernels on GPU devices to utilize their processing capacity and freeing up resources on the ARM processor of mobile devices. Our results show that, this approach helps to achieve desirable throughputs on embedded mobile devices. Experimental results demonstrate that proposed algorithm is scalable and can achieve high throughputs on multiple GPU devices. Moreover, the proposed algorithm structure provides a trade off for the operating system to choose between performance and resource management by selecting various values for the number of streams that are used for decoding.

@@ -48,7 +48,7 @@
 	 double MinSignalToNoise  = 0.50;
 	 double MaxSignalToNoise  = 1;
 	 double PasSignalToNoise  = 0.10;
-	 int    NUMBER_ITERATIONS  = 20;
+	 int    NUMBER_ITERATIONS  = 10;
 	 int    STOP_TIMER_SECOND  = -1;
 	 bool   QPSK_CHANNEL       = false;
 	 bool   Es_N0              = false; // FALSE => MODE Eb_N0
