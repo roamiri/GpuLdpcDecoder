@@ -12,7 +12,6 @@ link_directories(
 "/usr/local/cuda/lib64/"
 )
 
-# set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-Wall")
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-Wall  -fopenmp  -O3 -march=native -m64 -finline -funroll-loops")
 # set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-Wall -fopenmp -O3 -march=native -mtune=cortex-a15 -marm -mfpu=neon -finline -funroll-loops -flax-vector-conversions")
 
@@ -20,7 +19,6 @@ set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-Wall  -fopenmp  -O3 -march=native -m64 
 set(CUDA_NVCC_FLAGS
     ${CUDA_NVCC_FLAGS}
     -arch=sm_21
-#     -default-stream per-thread
     )
 
 set(srcs

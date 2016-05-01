@@ -16,13 +16,6 @@
  
  #include <omp.h>
  
- //#include "CFloodingGpuDecoder.h"
- 
- #include "decoder/CGPU_Decoder_MS_SIMD.h"
- 
- 
- //#define pi  3.1415926536
- 
  #include "utils/CTimer.h"
  #include "utils/CTimerCpu.h"
  #include "frame/CFrame.h"
@@ -30,47 +23,19 @@
  #include "ber_analyzer/ErrorAnalyzer.h"
  #include "terminal/CTerminal.h"
  
+ #include "decoder/CGPU_Decoder_MS_SIMD.h"
  #include "matrix/constantes_gpu.h"
- 
- //#define SINGLE_THREAD 1
  
  int    QUICK_STOP           =  false;
  bool   BER_SIMULATION_LIMIT =  false;
  double BIT_ERROR_LIMIT      =  1e-7;
  
- //int technique          = 0;
- //int sChannel           = 1; // CHANNEL ON GPU
  
  ////////////////////////////////////////////////////////////////////////////////////
- 
- void show_info()
- {
-	 struct cudaDeviceProp devProp;
-	 cudaGetDeviceProperties(&devProp, 0);
-	 //  	printf("(II) Identifiant du GPU (CUDA)    : %s\n", devProp.name);
-	 printf("(II) Number of Multi-Processor    : %d\n", devProp.multiProcessorCount);
-	 printf("(II) + totalGlobalMem             : %ld Mo\n", (devProp.totalGlobalMem/1024/1024));
-	 printf("(II) + sharedMemPerBlock          : %ld Ko\n", (devProp.sharedMemPerBlock/1024));
-	 #ifdef CUDA_6
-	 printf("(II) + sharedMemPerMultiprocessor : %ld Ko\n", (devProp.sharedMemPerMultiprocessor/1024));
-	 printf("(II) + regsPerMultiprocessor      : %ld\n", devProp.regsPerMultiprocessor);
-	 #endif
-	 printf("(II) + regsPerBlock               : %d\n", (int)devProp.regsPerBlock);
-	 printf("(II) + warpSize                   : %d\n", (int)devProp.warpSize);
-	 printf("(II) + memoryBusWidth             : %d\n", (int)devProp.memoryBusWidth);
-	 printf("(II) + memoryClockRate            : %d\n", (int)devProp.memoryClockRate);
-	 
-	 {
-		 struct cudaFuncAttributes attr;
-		 cudaFuncGetAttributes(&attr, (const void*)LDPC_Sched_Stage_1_MS_SIMD);
-		 printf("(II) CGPU_Decoder_MS_SIMD   (PTX version %d) : %2d regs, %4d shared bytes, %4d local bytes\n", attr.ptxVersion, attr.numRegs, (int)attr.localSizeBytes, (int)attr.sharedSizeBytes);
-	 }
-	 fflush(stdout);
- }
+ void show_info();
+
  
  ////////////////////////////////////////////////////////////////////////////////////
- 
-//  #define MAX_THREADS 1
  
  int main(int argc, char* argv[])
  {
@@ -92,12 +57,9 @@
 	 
 	 char  defDecoder[] = "MS";
 	 const char* type = defDecoder;
-	 
-	 //
-	 // ON CONFIGURE LE NOMBRE DE THREAD A UTILISER PAR DEFAUT
-	 //
+	
 	 int NUM_ACTIVE_THREADS = 1;
-// 	 omp_set_num_threads(NUM_ACTIVE_THREADS);
+	 omp_set_num_threads(NUM_ACTIVE_THREADS);
 	 
 	 cudaSetDevice(0);
 	 cudaDeviceSynchronize();
@@ -149,42 +111,35 @@
 			 NB_THREAD_ON_GPU = atoi( argv[p+1] );
 			 p += 1;
 			 
-		 }else if( strcmp(argv[p], "-fMS") == 0 ){
-			 type      = "fMS";
-			 
-		 }else if( strcmp(argv[p], "-xMS") == 0 ){
-			 type      = "xMS";
-			 
-		 }else if( strcmp(argv[p], "-MS") == 0 ){
-			 type      = "MS";
-			 
-		 }else if( strcmp(argv[p], "-OMS") == 0 ){
-			 type      = "OMS";
-			 
-		 }else if( strcmp(argv[p], "-NMS") == 0 ){
-			 type      = "NMS";
-			 
-		 }else if( strcmp(argv[p], "-2NMS") == 0 ){
-			 type      = "2NMS";
-			 p+=1;
-		 }else if (strcmp(argv[p], "-thread") == 0){
+		 }
+		 else if (strcmp(argv[p], "-thread") == 0)
+		 {
 			 int nThreads = atoi(argv[p + 1]);
-			 if (nThreads > 4) {
-				 printf("(WW) Number of thread can not be higher than 4 => Using 4 threads.");
+			 if (nThreads > 4) 
+			 {
+				 printf(" Number of thread can not be higher than 4 => Using 4 threads.");
 				 NUM_ACTIVE_THREADS = 4;
-			 } else if (nThreads < 1) {
-				 printf("(WW) Number of thread can be lower than 1 => Using 1 thread.");
+			 } 
+			 else if (nThreads < 1) 
+			 {
+				 printf("Number of thread can be lower than 1 => Using 1 thread.");
 				 NUM_ACTIVE_THREADS = 1;
-			 } else {
+			 } 
+			 else 
+			 {
 				 NUM_ACTIVE_THREADS = nThreads;
 			 }
 			 omp_set_num_threads(NUM_ACTIVE_THREADS);
 			 p += 1;
-		 }else if( strcmp(argv[p], "-info") == 0 ){
+		 }
+		 else if( strcmp(argv[p], "-info") == 0 )
+		 {
 			 show_info();
 			 exit( 0 );
 			 
-		 }else{
+		 }
+		 else
+		 {
 			 printf("(EE) Unknown argument (%d) => [%s]\n", p, argv[p]);
 			 exit(0);
 		 }
@@ -221,7 +176,6 @@
 	 if(STOP_TIMER_SECOND == -1)
 		 while (Eb_N0 <=MaxSignalToNoise)
 		 {
-			 
 			 noise->configure(Eb_N0);
 			 
 			 CTimer temps_ecoule(true);
@@ -238,7 +192,7 @@
 			CTimer essai(true);
 			decoder->decode( simu_data->get_t_noise_data(), simu_data->get_t_decode_data(), NUMBER_ITERATIONS );
 			etime += essai.get_time_ms();
-			noise->generate();  // ON GENERE LE BRUIT DU CANAL
+			noise->generate();  
 			errCounter->generate();
 			fdecoding += 1;
 			 
@@ -255,42 +209,28 @@
 			 
 			 if( (simu_timer.get_time_sec() >= STOP_TIMER_SECOND) && (STOP_TIMER_SECOND != -1) )
 			 {
-				 std::cerr <<  "got out of loop !!" << __LINE__ << std::endl;
 				 break;
 			 }
-			 
 			 Eb_N0 = Eb_N0 + PasSignalToNoise;
-			 
-			 if( BER_SIMULATION_LIMIT == true )
-			 {
-				 if( errCounters.ber_value() < BIT_ERROR_LIMIT ){
-					 printf("(II) THE SIMULATION HAS STOP DUE TO THE (USER) QUASI-ERROR FREE CONTRAINT.\n");
-					 std::cerr <<  "got out of loop !!" << __LINE__ << std::endl;
-					 break;
-				 }
-			 }
 		 }
 		 
 		 if(STOP_TIMER_SECOND==-1)
 		 {
 			 printf("FINAL REPORT.\n");
-			 long int tempDum = 0;
 			 temps = etime ;
 			 
-			 printf("(II) PERFORMANCE EVALUATION WAS PERFORMED ON %d RUNS, TOTAL TIME = %dms\n", fdecoding, temps/1000);
+			 printf("(II) PERFORMANCE EVALUATION WAS PERFORMED ON %ld RUNS, TOTAL TIME = %ldms\n", fdecoding, temps/1000);
 			 temps /= fdecoding;
 			 
-			 printf("(II) + TIME / RUN = %dms\n", temps/1000);
+			 printf("(II) + TIME / RUN = %ldms\n", temps/1000);
 			 int   workL =  errCounters.nb_processed_frames();// NUM_ACTIVE_THREADS * NB_THREAD_ON_GPU;
-			 int flt = sizeof(float);
-			 // 			temps /= 1000;
-			 float   kbits = ((float)(workL * _N / temps) );
+			 float kbits = ((float)(workL * _N / temps) );
 			 float mbits = ((float)kbits/1000.0);
-			 printf("(II) + DECODER LATENCY (ms)     = %d\n", temps/1000);
+			 printf("(II) + DECODER LATENCY (ms)     = %ld\n", temps/1000);
 			 printf("(II) + DECODER THROUGHPUT (Mbps)= %.1f\n", mbits);
 			 printf("(II) + (%.2fdB, %dThd : %dCw, %dits) THROUGHPUT = %.1f\n", Eb_N0, NB_THREAD_ON_GPU, workL, NUMBER_ITERATIONS, mbits);
 			 cout << endl << "Temps = " << temps/1000 << "ms : " << mbits*1000;
-			 cout << "kb/s : " << ((float)(temps/1000)/NB_THREAD_ON_GPU) << "ms/frame" << endl << endl;
+			 cout << "kb/s : " << ((float)(temps/1000)/NB_THREAD_ON_GPU) << "ms/frame" << endl;
 		 }
 		 
 		 ////////////////////////////////////////////////////////////////////////////////
@@ -315,8 +255,6 @@
 				 {
 					 for (int qq = 0; qq < 20; qq++) 
 					 {
-						 // to limit timer runtime impact on performances (for very small LDPC codes)
-						 // Indeed, depending on OS and CTimer implementations, time read can be long...
 						 decoder->decode(simu_data->get_t_noise_data(), simu_data->get_t_decode_data(), NUMBER_ITERATIONS);
 						 exec += 1;
 					 }
@@ -332,3 +270,17 @@
 		 return 0;
  }
  
+ 
+void show_info()
+{
+	 struct cudaDeviceProp devProp;
+	 cudaGetDeviceProperties(&devProp, 0);
+	 printf("(II) Number of Multi-Processor    : %d\n", devProp.multiProcessorCount);
+	 printf("(II) + totalGlobalMem             : %ld Mo\n", (devProp.totalGlobalMem/1024/1024));
+	 printf("(II) + sharedMemPerBlock          : %ld Ko\n", (devProp.sharedMemPerBlock/1024));
+	 printf("(II) + regsPerBlock               : %d\n", (int)devProp.regsPerBlock);
+	 printf("(II) + warpSize                   : %d\n", (int)devProp.warpSize);
+	 printf("(II) + memoryBusWidth             : %d\n", (int)devProp.memoryBusWidth);
+	 printf("(II) + memoryClockRate            : %d\n", (int)devProp.memoryClockRate);
+	 fflush(stdout);
+}

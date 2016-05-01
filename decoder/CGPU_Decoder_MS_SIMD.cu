@@ -2,7 +2,6 @@
 #include <iostream>
 #include "CGPU_Decoder_MS_SIMD.h"
 #include "transpose/GPU_Transpose_uint8.h"
-#include "utils/debug_fx.h"
 
 static const size_t BLOCK_SIZE = 128; // 96 for exp.
 
