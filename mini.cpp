@@ -34,15 +34,15 @@
  ////////////////////////////////////////////////////////////////////////////////////
  void show_info();
 
- 
+ #define MAX_THREADS 4
  ////////////////////////////////////////////////////////////////////////////////////
  
  int main(int argc, char* argv[])
  {
 	 int p;
 	 srand( 0 );
-	 printf("(II) LDPC DECODER - Flooding scheduled decoder\n");
-	 printf("(II) GENERATED : %s - %s\n", __DATE__, __TIME__);
+	 printf("LDPC DECODER - Flooding scheduled decoder\n");
+	 printf("GENERATED : %s - %s\n", __DATE__, __TIME__);
 	 
 	 double Eb_N0;
 	 double MinSignalToNoise  = 0.50;
@@ -146,128 +146,219 @@
 	 }
 	 
 	 double performance = (double)(NmoinsK)/(double)(_N);
-	 printf("(II) Code LDPC (N, K)     : (%d,%d)\n", _N, _K);
-	 printf("(II) Performance of Code  : %.3f\n", performance);
-	 printf("(II) # ITERATIONs of CODE : %d\n", NUMBER_ITERATIONS);
-	 printf("(II) FER LIMIT FOR SIMU   : %d\n", FRAME_ERROR_LIMIT);
-	 printf("(II) SIMULATION  RANGE    : [%.2f, %.2f], STEP = %.2f\n", MinSignalToNoise, MaxSignalToNoise, PasSignalToNoise);
-	 printf("(II) MODE EVALUATION      : %s\n", ((Es_N0)?"Es/N0":"Eb/N0") );
-	 printf("(II) MIN-SUM ALGORITHM    : %s\n", type );
-	 printf("(II) FAST STOP MODE       : %d\n", QUICK_STOP);
+	 printf("Code LDPC (N, K)     : (%d,%d)\n", _N, _K);
+	 printf("Performance of Code  : %.3f\n", performance);
+	 printf("# ITERATIONs of CODE : %d\n", NUMBER_ITERATIONS);
+	 printf("FER LIMIT FOR SIMU   : %d\n", FRAME_ERROR_LIMIT);
+	 printf("SIMULATION  RANGE    : [%.2f, %.2f], STEP = %.2f\n", MinSignalToNoise, MaxSignalToNoise, PasSignalToNoise);
+	 printf("MODE EVALUATION      : %s\n", ((Es_N0)?"Es/N0":"Eb/N0") );
+	 printf("MIN-SUM ALGORITHM    : %s\n", type );
+	 printf("FAST STOP MODE       : %d\n", QUICK_STOP);
 	 
 	 CTimer simu_timer(true);
 	
-	 CFrame* simu_data;
-	 simu_data = new CFrame(_N, _K, NB_THREAD_ON_GPU);
+	 CFrame* simu_data[MAX_THREADS];
+	for(int i=0;i<MAX_THREADS;i++)
+        simu_data[i] = new CFrame(_N, _K, NB_THREAD_ON_GPU);
 	 
-	 Chanel_AWGN_SIMD* noise;
-	 noise = new Chanel_AWGN_SIMD(simu_data, 4, QPSK_CHANNEL, Es_N0);
+	 Chanel_AWGN_SIMD* noise[MAX_THREADS];
+	 for(int i=0;i<MAX_THREADS;i++)
+		noise[i] = new Chanel_AWGN_SIMD(simu_data[i], 4, QPSK_CHANNEL, Es_N0);
 	 
-	 CGPUDecoder* decoder;
-	 decoder = new CGPU_Decoder_MS_SIMD( NB_THREAD_ON_GPU, _N, _K, _M );
+	 CGPUDecoder* decoder[MAX_THREADS];
+	 for(int i=0;i<MAX_THREADS;i++)
+		decoder[i] = new CGPU_Decoder_MS_SIMD( NB_THREAD_ON_GPU, _N, _K, _M );
 	 
 	 Eb_N0 = MinSignalToNoise;
-	 long int temps = 0, fdecoding = 0;
+	 long int fdecoding = 0;
 	 
 	 ErrorAnalyzer* errCounter;
 	 
 	 long etime = 0;
-	 ErrorAnalyzer errCounters(simu_data, FRAME_ERROR_LIMIT, false, false);
+	 ErrorAnalyzer errCounters(simu_data[0], FRAME_ERROR_LIMIT, false, false);
 	 if(STOP_TIMER_SECOND == -1)
 		 while (Eb_N0 <=MaxSignalToNoise)
 		 {
-			 noise->configure(Eb_N0);
+			 noise[0]->configure(Eb_N0);
 			 
 			 CTimer temps_ecoule(true);
 			 CTimer term_refresh(true);
 			 
-			 errCounter = new ErrorAnalyzer(simu_data, FRAME_ERROR_LIMIT, true, true);
+			 errCounter = new ErrorAnalyzer(simu_data[0], FRAME_ERROR_LIMIT, true, true);
 			 
 			 CTerminal terminal(&errCounters, &temps_ecoule, Eb_N0);
 
-			 noise->generate();
+			 noise[0]->generate();
 			 
 			 errCounter->store_enc_bits();
 
 			CTimer essai(true);
-			decoder->decode( simu_data->get_t_noise_data(), simu_data->get_t_decode_data(), NUMBER_ITERATIONS );
+			decoder[0]->decode( simu_data[0]->get_t_noise_data(), simu_data[0]->get_t_decode_data(), NUMBER_ITERATIONS, false );
 			etime += essai.get_time_ms();
-			noise->generate();  
+			noise[0]->generate();  
 			errCounter->generate();
 			fdecoding += 1;
 			 
 			 errCounters.reset_internals();
 			 errCounters.accumulate( errCounter);
 			 
-			 if( term_refresh.get_time_sec() >= 1 )
-			 {
-				 term_refresh.reset();
-				 terminal.temp_report();
-			 }
 
 			 terminal.final_report();
 			 
-			 if( (simu_timer.get_time_sec() >= STOP_TIMER_SECOND) && (STOP_TIMER_SECOND != -1) )
-			 {
-				 break;
-			 }
 			 Eb_N0 = Eb_N0 + PasSignalToNoise;
 		 }
 		 
-		 if(STOP_TIMER_SECOND==-1)
-		 {
-			 printf("FINAL REPORT.\n");
-			 temps = etime ;
-			 
-			 printf("(II) PERFORMANCE EVALUATION WAS PERFORMED ON %ld RUNS, TOTAL TIME = %ldms\n", fdecoding, temps/1000);
-			 temps /= fdecoding;
-			 
-			 printf("(II) + TIME / RUN = %ldms\n", temps/1000);
-			 int   workL =  errCounters.nb_processed_frames();// NUM_ACTIVE_THREADS * NB_THREAD_ON_GPU;
-			 float kbits = ((float)(workL * _N / temps) );
-			 float mbits = ((float)kbits/1000.0);
-			 printf("(II) + DECODER LATENCY (ms)     = %ld\n", temps/1000);
-			 printf("(II) + DECODER THROUGHPUT (Mbps)= %.1f\n", mbits);
-			 printf("(II) + (%.2fdB, %dThd : %dCw, %dits) THROUGHPUT = %.1f\n", Eb_N0, NB_THREAD_ON_GPU, workL, NUMBER_ITERATIONS, mbits);
-			 cout << endl << "Temps = " << temps/1000 << "ms : " << mbits*1000;
-			 cout << "kb/s : " << ((float)(temps/1000)/NB_THREAD_ON_GPU) << "ms/frame" << endl;
-		 }
-		 
-		 ////////////////////////////////////////////////////////////////////////////////
-		 //
-		 //
-		 // SECOND EVALUATION OF THE THROUGHPUT WITHOUT ENCODED FRAME REGENERATION
-		 //
-		 //
-		 if( STOP_TIMER_SECOND != -1 )
-		 {
-			 int exec = 0;
-			 const int t_eval = STOP_TIMER_SECOND;
-			 
-			 
-			 //
-			 // ONE THREAD MODE
-			 //
-			 if (NUM_ACTIVE_THREADS == 1) 
-			 {
-				 CTimerCpu t_Timer1(true);
-				 while (t_Timer1.get_time_sec() < t_eval) 
-				 {
-					 for (int qq = 0; qq < 20; qq++) 
-					 {
-						 decoder->decode(simu_data->get_t_noise_data(), simu_data->get_t_decode_data(), NUMBER_ITERATIONS);
-						 exec += 1;
-					 }
-				 }
-				 t_Timer1.stop();
-				 float debit = _N * ((exec * NB_THREAD_ON_GPU ) / ((float) t_Timer1.get_time_sec()));
-				 debit /= 1000000.0f;
-				 printf("(PERF1) LDPC decoder air throughput = %1.6f Mbps\n", debit);
-			 }
-			 exit(0);
-		 }
-		 
-		 return 0;
+		////////////////////////////////////////////////////////////////////////////////
+		//
+		//
+		// SECOND EVALUATION OF THE THROUGHPUT WITHOUT ENCODED FRAME REGENERATION
+		//
+		//
+		if( STOP_TIMER_SECOND != -1 )
+		{
+			int exec = 0;
+			const int t_eval = STOP_TIMER_SECOND;
+			
+			
+			//
+			// ONE THREAD MODE
+			//
+			if (NUM_ACTIVE_THREADS == 1) 
+			{
+				CTimerCpu t_Timer1(true);
+				while (t_Timer1.get_time_sec() < t_eval) 
+				{
+					for (int qq = 0; qq < 20; qq++) 
+					{
+						decoder[0]->decode(simu_data[0]->get_t_noise_data(), simu_data[0]->get_t_decode_data(), NUMBER_ITERATIONS, true);
+						exec += 1;
+					}
+				}
+				t_Timer1.stop();
+				float debit = _N * ((exec * NB_THREAD_ON_GPU ) / ((float) t_Timer1.get_time_sec()));
+				debit /= 1000000.0f;
+				printf("(PERF1) LDPC decoder air throughput = %1.6f Mbps\n", debit);
+			}
+		//
+		// TWO THREAD MODE
+		//
+			if (NUM_ACTIVE_THREADS == 2) 
+			{
+				exec = 0;
+				omp_set_num_threads(2);
+				CTimerCpu t_Timer2(true);
+
+				while (t_Timer2.get_time_sec() < t_eval) 
+				{
+					const int looper = 20;
+					#pragma omp parallel sections
+					{
+						#pragma omp section
+						{
+							for (int qq = 0; qq < looper; qq++)
+								decoder[0]->decode(simu_data[0]->get_t_noise_data(), simu_data[0]->get_t_decode_data(), NUMBER_ITERATIONS, true);
+						}
+						#pragma omp section
+						{
+							for (int qq = 0; qq < looper; qq++)
+								decoder[1]->decode(simu_data[1]->get_t_noise_data(), simu_data[1]->get_t_decode_data(), NUMBER_ITERATIONS, true);
+						}
+					}
+					exec += 2 * looper;
+				}
+				t_Timer2.stop();
+
+				float debit = _N * ((exec * NB_THREAD_ON_GPU) / ((float) t_Timer2.get_time_sec()));
+				debit /= 1000000.0f;
+				printf("(PERF2) LDPC decoder air throughput = %1.3f Mbps\n", debit);
+		}
+
+		//
+		// THREE THREAD MODE
+		//
+		if (NUM_ACTIVE_THREADS == 3) 
+		{
+			exec = 0;
+			omp_set_num_threads(3);
+			CTimerCpu t_Timer3(true);
+
+			while (t_Timer3.get_time_sec() < t_eval) 
+			{
+				const int looper = 20;
+				#pragma omp parallel sections
+				{
+					#pragma omp section
+					{
+						for (int qq = 0; qq < looper; qq++)
+							decoder[0]->decode(simu_data[0]->get_t_noise_data(), simu_data[0]->get_t_decode_data(), NUMBER_ITERATIONS, true);
+					}
+					#pragma omp section
+					{
+						for (int qq = 0; qq < looper; qq++)
+							decoder[1]->decode(simu_data[1]->get_t_noise_data(), simu_data[1]->get_t_decode_data(), NUMBER_ITERATIONS, true);
+					}
+					#pragma omp section
+					{
+						for (int qq = 0; qq < looper; qq++)
+							decoder[2]->decode(simu_data[2]->get_t_noise_data(), simu_data[2]->get_t_decode_data(), NUMBER_ITERATIONS, true);
+					}
+				}
+				exec += 4 * looper;
+			}
+			t_Timer3.stop();
+
+			float debit = _N * ((exec * NB_THREAD_ON_GPU) / ((float) t_Timer3.get_time_sec()));
+			debit /= 1000000.0f;
+			printf("(PERF4) LDPC decoder air throughput = %1.3f Mbps\n", debit);
+		}
+			
+			
+		//
+        // FOUR THREAD MODE
+        //
+        if (NUM_ACTIVE_THREADS == 4) 
+		{
+            exec = 0;
+            omp_set_num_threads(4);
+            CTimerCpu t_Timer4(true);
+
+            while (t_Timer4.get_time_sec() < t_eval) 
+			{
+                const int looper = 20;
+                #pragma omp parallel sections
+                {
+                    #pragma omp section
+                    {
+                        for (int qq = 0; qq < looper; qq++)
+                            decoder[0]->decode(simu_data[0]->get_t_noise_data(), simu_data[0]->get_t_decode_data(), NUMBER_ITERATIONS, true);
+                    }
+                    #pragma omp section
+                    {
+                        for (int qq = 0; qq < looper; qq++)
+                            decoder[1]->decode(simu_data[1]->get_t_noise_data(), simu_data[1]->get_t_decode_data(), NUMBER_ITERATIONS, true);
+                    }
+                    #pragma omp section
+                        {
+                        for (int qq = 0; qq < looper; qq++)
+                            decoder[2]->decode(simu_data[2]->get_t_noise_data(), simu_data[2]->get_t_decode_data(), NUMBER_ITERATIONS, true);
+                    }
+                    #pragma omp section
+                    {
+                        for (int qq = 0; qq < looper; qq++)
+                            decoder[3]->decode(simu_data[3]->get_t_noise_data(), simu_data[3]->get_t_decode_data(), NUMBER_ITERATIONS, true);
+                    }
+                }
+                exec += 4 * looper;
+            }
+            t_Timer4.stop();
+
+            float debit = _N * ((exec * NB_THREAD_ON_GPU) / ((float) t_Timer4.get_time_sec()));
+            debit /= 1000000.0f;
+            printf("(PERF4) LDPC decoder air throughput = %1.3f Mbps\n", debit);
+        }
+	}
+
+return 0;
  }
  
  
@@ -275,12 +366,12 @@ void show_info()
 {
 	 struct cudaDeviceProp devProp;
 	 cudaGetDeviceProperties(&devProp, 0);
-	 printf("(II) Number of Multi-Processor    : %d\n", devProp.multiProcessorCount);
-	 printf("(II) + totalGlobalMem             : %ld Mo\n", (devProp.totalGlobalMem/1024/1024));
-	 printf("(II) + sharedMemPerBlock          : %ld Ko\n", (devProp.sharedMemPerBlock/1024));
-	 printf("(II) + regsPerBlock               : %d\n", (int)devProp.regsPerBlock);
-	 printf("(II) + warpSize                   : %d\n", (int)devProp.warpSize);
-	 printf("(II) + memoryBusWidth             : %d\n", (int)devProp.memoryBusWidth);
-	 printf("(II) + memoryClockRate            : %d\n", (int)devProp.memoryClockRate);
+	 printf("Number of Multi-Processor    : %d\n", devProp.multiProcessorCount);
+	 printf("+ totalGlobalMem             : %ld Mo\n", (devProp.totalGlobalMem/1024/1024));
+	 printf("+ sharedMemPerBlock          : %ld Ko\n", (devProp.sharedMemPerBlock/1024));
+	 printf("+ regsPerBlock               : %d\n", (int)devProp.regsPerBlock);
+	 printf("+ warpSize                   : %d\n", (int)devProp.warpSize);
+	 printf("+ memoryBusWidth             : %d\n", (int)devProp.memoryBusWidth);
+	 printf("+ memoryClockRate            : %d\n", (int)devProp.memoryClockRate);
 	 fflush(stdout);
 }

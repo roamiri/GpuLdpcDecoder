@@ -62,9 +62,10 @@ void CTerminal::final_report(){
     unsigned long fpmn  = (60 * counter->nb_processed_frames()) / temps;
     double        bps   = ((double)fpmn * (double)counter->nb_data()) / 60.0 / 1000.0 / 1000.0;
     double be_par_fe = (double) counter->nb_be() / (double) counter->nb_fe();
-    printf("SNR = %.2f | BER =  %2.3e | FER =  %2.3e | BPS =  %2.2f | MATRICES = %10ld| FE = %d | BE = %d | BE/FE = %.1f | RUNTIME = ", Eb_N0, tBER, tFER, bps, counter->nb_processed_frames(), (int) counter->nb_fe(), (int) counter->nb_be(), be_par_fe);
+//     printf("SNR = %.2f | BER =  %2.3e | FER =  %2.3e | BPS =  %2.2f | MATRICES = %10ld| FE = %d | BE = %d | BE/FE = %.1f | RUNTIME = ", Eb_N0, tBER, tFER, bps, counter->nb_processed_frames(), (int) counter->nb_fe(), (int) counter->nb_be(), be_par_fe);
+	printf("SNR = %.2f | BER =  %2.3e | FE = %d | BE = %d | BE/FE = %.1f ", Eb_N0, tBER, (int) counter->nb_fe(), (int) counter->nb_be(), be_par_fe);
 //    printf("SNR = %.2f | BER =  %2.3e | FER =  %2.3e | BPS =  %2.2f | MATRICES = %10ld| FE = %d | BE = %d | RUNTIME = ", Eb_N0, tBER, tFER, bps, counter->nb_processed_frames(), (int)counter->nb_fe(), (int)counter->nb_be());
-    ShowTime( temps );
+//     ShowTime( temps );
     printf("\n");
     fflush(stdout);
 }

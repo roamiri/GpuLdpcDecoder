@@ -21,7 +21,7 @@ protected:
 public:
 	CGPUDecoder(size_t _nb_frames, size_t n, size_t k, size_t m );
     virtual ~CGPUDecoder();
-    virtual void decode(float var_nodes[_N], int Rprime_fix[_N], int number_iteration) = 0;
+    virtual void decode(float var_nodes[_N], int Rprime_fix[_N], int number_iteration, bool stream) = 0;
 };
 
 #endif
