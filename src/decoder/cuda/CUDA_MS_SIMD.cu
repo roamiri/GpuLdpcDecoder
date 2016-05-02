@@ -28,7 +28,7 @@ __global__ void LDPC_Sched_Stage_1_MS_SIMD(unsigned int var_nodes[_N], unsigned 
 		unsigned int *p_indice_nod1 = PosNoeudsVariable;
 
 		//
-		// SMALL TIP IS USED TO ACCELERATE THE SIMULATION OF DECODER
+		// 
 		//
 		for (int z = 0; z < DEG_1_COMPUTATIONS; z++) 
 		{
@@ -39,7 +39,7 @@ __global__ void LDPC_Sched_Stage_1_MS_SIMD(unsigned int var_nodes[_N], unsigned 
 			register unsigned int tab_vContr[DEG_1];
 
 			//
-			// ON PRECHARGE LES INDICES D'ENTRELACEMENT DES VN
+			// 
 			//
 			__syncthreads();
 			if( threadIdx.x < DEG_1){
@@ -83,7 +83,7 @@ __global__ void LDPC_Sched_Stage_1_MS_SIMD(unsigned int var_nodes[_N], unsigned 
 			unsigned int tab_vContr [DEG_2];
 
 			//
-			// ON PRECHARGE LES INDICES D'ENTRELACEMENT DES VN
+			//
 			//
 			__syncthreads();
 			if( threadIdx.x < DEG_2){
@@ -128,7 +128,7 @@ __global__ void LDPC_Sched_Stage_1_MS_SIMD(unsigned int var_nodes[_N], unsigned 
 		unsigned int *p_msg1w = var_mesgs + i;
 		unsigned int *p_indice_nod1 = PosNoeudsVariable;
 		//
-		// ON UTILISE UNE PETITE ASTUCE AFIN D'ACCELERER LA SIMULATION DU DECODEUR
+		//
 		//
 		for (int z = 0; z < DEG_1_COMPUTATIONS; z++) {
 			unsigned int sign_du_check = 0x00000000;
@@ -137,7 +137,7 @@ __global__ void LDPC_Sched_Stage_1_MS_SIMD(unsigned int var_nodes[_N], unsigned 
 			unsigned int tab_vContr[DEG_1];
 
 			//
-			// ON PRECHARGE LES INDICES D'ENTRELACEMENT DES VN
+			//
 			//
 			__syncthreads();
 			if( threadIdx.x < DEG_1){
@@ -148,7 +148,7 @@ __global__ void LDPC_Sched_Stage_1_MS_SIMD(unsigned int var_nodes[_N], unsigned 
 
 			#pragma unroll
 			for (int j = 0; j < DEG_1; j++) {
-				tab_vContr[j] = vsubss4(var_nodes[iTable[j] * ii + i], (*p_msg1r)); // CALCUL DE LA Ieme CONTRIBUTION
+				tab_vContr[j] = vsubss4(var_nodes[iTable[j] * ii + i], (*p_msg1r)); // 
 				p_msg1r += ii;
 				min2 = vminu4(min2, vmaxu4(vabs4(tab_vContr[j]), min1));
 				min1 = vminu4(min1, vabs4(tab_vContr[j]));
@@ -181,7 +181,7 @@ __global__ void LDPC_Sched_Stage_1_MS_SIMD(unsigned int var_nodes[_N], unsigned 
 			unsigned int tab_vContr [DEG_2];
 
 			//
-			// ON PRECHARGE LES INDICES D'ENTRELACEMENT DES VN
+			//
 			//
 			__syncthreads();
 			if( threadIdx.x < DEG_2){
@@ -192,7 +192,7 @@ __global__ void LDPC_Sched_Stage_1_MS_SIMD(unsigned int var_nodes[_N], unsigned 
 
 			#pragma unroll
 			for (int j = 0; j<DEG_2; j++) {
-				tab_vContr[j] = vsubss4(var_nodes[iTable[j] * ii + i], (*p_msg1r));// CALCUL DE LA Ieme CONTRIBUTION
+				tab_vContr[j] = vsubss4(var_nodes[iTable[j] * ii + i], (*p_msg1r));// 
 				p_msg1r += ii;
 				min2 = vminu4(min2, vmaxu4(vabs4(tab_vContr[j]), min1));
 				min1 = vminu4(min1, vabs4(tab_vContr[j]));
