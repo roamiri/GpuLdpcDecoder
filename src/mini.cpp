@@ -303,7 +303,7 @@
 							decoder[2]->decode(simu_data[2]->get_t_noise_data(), simu_data[2]->get_t_decode_data(), NUMBER_ITERATIONS, true);
 					}
 				}
-				exec += 4 * looper;
+				exec += 3 * looper;
 			}
 			t_Timer3.stop();
 
